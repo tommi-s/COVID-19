@@ -227,7 +227,7 @@ ggplot2::ggplot(
 
     ## `geom_smooth()` using method = 'loess' and formula 'y ~ x'
 
-![](README_files/figure-gfm/Plot-Sex-1.png)<!-- -->
+<img src="README_files/figure-gfm/Plot-Sex-1.png" width="75%" />
 
 ## By Age Groups
 
@@ -258,7 +258,7 @@ ggplot2::ggplot(
 
     ## `geom_smooth()` using method = 'loess' and formula 'y ~ x'
 
-![](README_files/figure-gfm/Plot-Age-1.png)<!-- -->
+<img src="README_files/figure-gfm/Plot-Age-1.png" width="75%" />
 
 ## By Age Groups and Sex
 
@@ -291,7 +291,7 @@ ggplot2::ggplot(
 
     ## `geom_smooth()` using method = 'loess' and formula 'y ~ x'
 
-![](README_files/figure-gfm/Plot-Age-and-Sex-1.png)<!-- -->
+<img src="README_files/figure-gfm/Plot-Age-and-Sex-1.png" width="75%" />
 
 ``` r
 ggplot2::ggplot(
@@ -322,7 +322,7 @@ ggplot2::ggplot(
 
     ## `geom_smooth()` using method = 'loess' and formula 'y ~ x'
 
-![](README_files/figure-gfm/Plot-Age-and-Sex-B-1.png)<!-- -->
+<img src="README_files/figure-gfm/Plot-Age-and-Sex-B-1.png" width="75%" />
 
 # Appendix
 
