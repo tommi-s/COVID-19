@@ -4,7 +4,7 @@ Tommi Suvitaival, <tommi.raimo.leo.suvitaival@regionh.dk>, Steno
 Diabetes Center Copenhagen
 2020-05-11
 
-# Load Data
+## Load Data
 
   - Data from Statistics Sweden SCB:
       - Överdödligheten sjunker i
@@ -33,9 +33,9 @@ data.loaded <-
     ## * `K 0-64 år` -> `K 0-64 år...7`
     ## * ...
 
-# Prepare Data
+## Prepare Data
 
-## Add Unassigned Deaths to Total
+### Add Unassigned Deaths to Total
 
 ``` r
 data <- data.loaded
@@ -59,7 +59,7 @@ for ( i in 1:length( idx.data ) ) {
 }
 ```
 
-## Bind Periods
+### Bind Periods
 
 ``` r
 tmp <- data.loaded
@@ -125,7 +125,7 @@ data$"Period" <-
   )
 ```
 
-## Translate
+### Translate
 
 ``` r
 colnames( data )[ colnames( data ) == "Vecka" ] <- "Week"
@@ -138,7 +138,7 @@ colnames( data ) <-
   )
 ```
 
-## Pivot to Longer Format
+### Pivot to Longer Format
 
 ``` r
 data.plot <- data
@@ -166,7 +166,7 @@ data.plot <-
   )
 ```
 
-## Omit Incomplete Weeks
+### Omit Incomplete Weeks
 
 ``` r
 data.plot <-
@@ -193,9 +193,9 @@ data.plot <-
   )
 ```
 
-# Plot
+## Plot
 
-## By Sex
+### By Sex
 
 ``` r
 ggplot2::ggplot(
@@ -229,7 +229,7 @@ ggplot2::ggplot(
 
 ![](README_files/figure-gfm/Plot-Sex-1.png)<!-- -->
 
-## By Age Groups
+### By Age Groups
 
 ``` r
 ggplot2::ggplot(
@@ -260,7 +260,7 @@ ggplot2::ggplot(
 
 ![](README_files/figure-gfm/Plot-Age-1.png)<!-- -->
 
-## By Age Groups and Sex
+### By Age Groups and Sex
 
 ``` r
 ggplot2::ggplot(
@@ -324,7 +324,7 @@ ggplot2::ggplot(
 
 ![](README_files/figure-gfm/Plot-Age-and-Sex-B-1.png)<!-- -->
 
-# Appendix
+## Appendix
 
 ``` r
 utils::sessionInfo()

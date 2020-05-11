@@ -17,7 +17,7 @@ knitr::opts_chunk$set(
 
 ```
 
-# Load Data
+## Load Data
 
 * Data from Statistics Sweden SCB:
   + Överdödligheten sjunker i Sverige
@@ -36,9 +36,9 @@ data.loaded <-
 
 ```
 
-# Prepare Data
+## Prepare Data
 
-## Add Unassigned Deaths to Total
+### Add Unassigned Deaths to Total
 
 ```{r Unassigned}
 
@@ -65,7 +65,7 @@ for ( i in 1:length( idx.data ) ) {
 ```
 
 
-## Bind Periods
+### Bind Periods
 
 ```{r Long}
 
@@ -133,7 +133,7 @@ data$"Period" <-
 
 ```
 
-## Translate
+### Translate
 
 ```{r Translate}
 
@@ -148,7 +148,7 @@ colnames( data ) <-
 
 ```
 
-## Pivot to Longer Format
+### Pivot to Longer Format
 
 ```{r Pivot-Longer}
 
@@ -174,7 +174,7 @@ data.plot <-
 
 ```
 
-## Omit Incomplete Weeks
+### Omit Incomplete Weeks
 
 ```{r Omit-Incomplete}
 
@@ -203,9 +203,9 @@ data.plot <-
 
 ```
 
-# Plot
+## Plot
 
-## By Sex
+### By Sex
 
 ```{r Plot-Sex}
 
@@ -237,7 +237,7 @@ ggplot2::ggplot(
 
 ```
 
-## By Age Groups
+### By Age Groups
 
 ```{r Plot-Age}
 
@@ -266,7 +266,7 @@ ggplot2::ggplot(
 
 ```
 
-## By Age Groups and Sex
+### By Age Groups and Sex
 
 ```{r Plot-Age-and-Sex}
 
@@ -326,7 +326,7 @@ ggplot2::ggplot(
 
 ```
 
-# Appendix
+## Appendix
 
 ```{r SessionInfo}
 
