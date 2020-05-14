@@ -1,0 +1,362 @@
+---
+title: "Registered COVID-19 Deaths by Country"
+output: github_document
+author: Tommi Suvitaival, tommi.raimo.leo.suvitaival@regionh.dk, Steno Diabetes Center
+  Copenhagen
+date: "`r Sys.Date()`"
+---
+
+```{r setup, include=FALSE}
+
+knitr::opts_chunk$set(
+  echo = TRUE,
+  dpi = 600,
+  fig.width = 9,
+  fig.height = 9,
+  warning = FALSE
+)
+```
+
+# Introduction
+
+* Country data from gapminder R-package
+* COVID-19 data from coronavirus R-package (dev)
+
+# Load Packages
+
+```{r Packages}
+
+library( magrittr )
+
+# devtools::install_github( "covid19r/coronavirus")
+
+```
+
+# Prepare Data
+
+## Gapminder
+
+```{r Gapminder}
+
+# View( gapminder::gapminder )
+
+data.gm <-
+  by(
+    data = gapminder::gapminder,
+    INDICES = gapminder::gapminder$"country",
+    FUN =
+      function( x ) {
+        unlist( x[ which.max( x$"year" ), ] )
+      }
+  )
+
+data.gm <-
+  simplify2array(
+    x = data.gm,
+    higher = FALSE
+  )
+
+data.gm <- t( data.gm )
+
+data.gm[ , "country" ] <- rownames( data.gm )
+
+data.gm <-
+  data.frame(
+    data.gm,
+    stringsAsFactors = FALSE
+  )
+
+data.gm[ , -1 ] <-
+  apply(
+    X = data.gm[ , -1 ],
+    MAR = 2,
+    FUN = as.numeric
+  )
+
+data.gm$"continent" <-
+  factor(
+    x = data.gm$"continent",
+    levels = 1:5,
+    labels = c( "Africa", "Americas", "Asia", "Europe", "Oceania" )
+  )
+
+```
+
+## Coronavirus
+
+```{r Coronavirus}
+
+data.covid <- 
+  coronavirus::coronavirus %>%
+  dplyr::group_by(
+    Country.Region,
+    type
+  )  %>%
+  dplyr::summarise(
+    Deaths = sum( cases )
+  )
+
+data.covid$"Country.Region"[ data.covid$"Country.Region" == "US" ] <-
+  "United States"
+
+```
+
+## Integrate
+
+```{r Integrate}
+
+data <-
+  merge(
+    x = data.gm,
+    y = data.covid[ which( data.covid$"type" == "death" ), ],
+    by.x = "country",
+    by.y = "Country.Region",
+    all = FALSE
+  )
+
+data$"Deaths_per_Capita" <- data$"Deaths" / data$"pop"
+
+data$"Deaths_per_100k" <- data$"Deaths_per_Capita" * 100000
+
+```
+
+# Figures
+
+## Deaths vs. Population Size
+
+### All
+
+```{r Deaths-v-Population}
+
+ggplot2::ggplot(
+  data = data,
+  mapping =
+    ggplot2::aes(
+      x = pop,
+      y = Deaths,
+      label = country
+    )
+) +
+  ggplot2::geom_point() +
+  ggplot2::scale_x_log10() +
+  ggplot2::scale_y_log10() +
+  ggrepel::geom_text_repel() +
+  ggplot2::geom_smooth( method = "lm" ) +
+  ggplot2::ylab( label = "Registered COVID-19 deaths\n(log)" ) +
+  ggplot2::xlab( label = "Population size\n(log)" )
+
+```
+
+```{r}
+
+summary(
+  lm(
+    formula = Deaths ~ pop,
+    data = data
+  )
+)
+
+```
+
+### By Continent
+
+```{r Deaths-v-Population-By-Continent}
+
+ggplot2::ggplot(
+  data = data,
+  mapping =
+    ggplot2::aes(
+      x = pop,
+      y = Deaths,
+      color = continent,
+      label = country
+    )
+) +
+  ggplot2::geom_point() +
+  ggplot2::scale_x_log10() +
+  ggplot2::scale_y_log10() +
+  ggrepel::geom_text_repel() +
+  ggplot2::geom_smooth( method = "lm" ) +
+  ggplot2::scale_color_brewer( palette = "Set1" ) +
+  ggplot2::facet_wrap( facets = ggplot2::vars( continent ) ) +
+  ggplot2::theme(
+    legend.position = "none"
+  ) +
+  ggplot2::ylab( label = "Registered COVID-19 deaths\n(log)" ) +
+  ggplot2::xlab( label = "Population size\n(log)" )
+
+```
+
+## Deaths per Capita vs. Life Expectancy
+
+### All
+
+```{r Deaths-v-Life-Exp}
+
+ggplot2::ggplot(
+  data = data,
+  mapping =
+    ggplot2::aes(
+      x = lifeExp,
+      y = Deaths_per_100k,
+      label = country
+    )
+) +
+  ggplot2::geom_point() +
+  ggplot2::scale_y_log10() +
+  ggrepel::geom_text_repel() +
+  ggplot2::geom_smooth( method = "lm" ) +
+  ggplot2::ylab( label = "Registered COVID-19 deaths\nper 100,000 inhabitants\n(log)" ) +
+  ggplot2::xlab( label = "Life expectancy\n(years)" )
+
+```
+
+```{r}
+
+summary(
+  lm(
+    formula = Deaths_per_100k ~ lifeExp,
+    data = data
+  )
+)
+
+```
+
+### By Continent
+
+```{r Deaths-v-Life-Exp-by-Continent}
+
+ggplot2::ggplot(
+  data = data,
+  mapping =
+    ggplot2::aes(
+      x = lifeExp,
+      y = Deaths_per_100k,
+      color = continent,
+      label = country
+    )
+) +
+  ggplot2::geom_point() +
+  ggplot2::scale_y_log10() +
+  ggrepel::geom_text_repel() +
+  ggplot2::geom_smooth( method = "lm", se = FALSE ) +
+  ggplot2::theme(
+    legend.position = "none"
+  ) +
+  ggplot2::scale_color_brewer( palette = "Set1" ) +
+  ggplot2::ylab( label = "Registered COVID-19 deaths\nper 100,000 inhabitants\n(log)" ) +
+  ggplot2::xlab( label = "Life expectancy\n(years)" )
+  
+
+```
+
+## Deaths per Capita vs. Gross Domestic Product per Capita
+
+### All
+
+```{r Deaths-v-GDP}
+
+ggplot2::ggplot(
+  data = data,
+  mapping =
+    ggplot2::aes(
+      x = gdpPercap,
+      y = Deaths_per_100k,
+      label = country
+    )
+) +
+  ggplot2::geom_point() +
+  ggplot2::scale_x_log10() +
+  ggplot2::scale_y_log10() +
+  ggrepel::geom_text_repel() +
+  ggplot2::geom_smooth( method = "lm" ) +
+  ggplot2::ylab( label = "Registered COVID-19 deaths\nper 100,000 inhabitants\n(log)" ) +
+  ggplot2::xlab( label = "Gross domestic product (GDP)\nper capita\n(log)" )
+
+```
+
+```{r}
+
+data.model <- data
+
+data.model$"Deaths_per_100k_log" <- log10( data.model$"Deaths_per_100k" )
+
+data.model$"gdpPercap_log" <- log10( data.model$"gdpPercap" )
+
+data.model <- data.model[ !is.infinite( data.model$"Deaths_per_100k_log" ), ]
+
+summary(
+  lm(
+    formula = Deaths_per_100k_log ~ gdpPercap_log,
+    data = data.model
+  )
+)
+
+summary(
+  lm(
+    formula = Deaths_per_100k_log ~ gdpPercap_log + lifeExp,
+    data = data.model
+  )
+)
+
+```
+
+```{r Deaths-v-GDP-Color}
+
+ggplot2::ggplot(
+  data = data,
+  mapping =
+    ggplot2::aes(
+      x = gdpPercap,
+      y = Deaths_per_100k,
+      label = country
+    )
+) +
+  ggplot2::geom_smooth( method = "lm" ) +
+  ggplot2::geom_point(
+    mapping = ggplot2::aes( color = continent )
+  ) +
+  ggplot2::scale_x_log10() +
+  ggplot2::scale_y_log10() +
+  ggrepel::geom_text_repel(
+    mapping = ggplot2::aes( color = continent )
+  ) +
+  ggplot2::scale_color_brewer( palette = "Set1" ) +
+  ggplot2::ylab( label = "Registered COVID-19 deaths\nper 100,000 inhabitants\n(log)" ) +
+  ggplot2::xlab( label = "Gross domestic product (GDP)\nper capita\n(log)" )
+
+```
+
+### By Continent
+
+```{r Deaths-v-GDP-by-Continent}
+
+ggplot2::ggplot(
+  data = data,
+  mapping =
+    ggplot2::aes(
+      x = gdpPercap,
+      y = Deaths_per_100k,
+      color = continent,
+      label = country
+    )
+) +
+  ggplot2::geom_point() +
+  ggplot2::scale_x_log10() +
+  ggplot2::scale_y_log10() +
+  ggrepel::geom_text_repel() +
+  ggplot2::geom_smooth( method = "lm", se = FALSE ) +
+  ggplot2::scale_color_brewer( palette = "Set1" ) +
+  ggplot2::ylab( label = "Registered COVID-19 deaths\nper 100,000 inhabitants\n(log)" ) +
+  ggplot2::xlab( label = "Gross domestic product (GDP)\nper capita\n(log)" )
+  
+
+```
+
+# Appendix
+
+```{r SessionInfo}
+
+utils::sessionInfo()
+
+```
