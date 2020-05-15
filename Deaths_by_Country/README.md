@@ -2,7 +2,7 @@ Registered COVID-19 Deaths by Country
 ================
 Tommi Suvitaival, <tommi.raimo.leo.suvitaival@regionh.dk>, Steno
 Diabetes Center Copenhagen
-2020-05-14
+2020-05-15
 
 # Introduction
 
@@ -24,45 +24,10 @@ library( magrittr )
 ``` r
 # View( gapminder::gapminder )
 
-data.gm <-
-  by(
-    data = gapminder::gapminder,
-    INDICES = gapminder::gapminder$"country",
-    FUN =
-      function( x ) {
-        unlist( x[ which.max( x$"year" ), ] )
-      }
-  )
-
-data.gm <-
-  simplify2array(
-    x = data.gm,
-    higher = FALSE
-  )
-
-data.gm <- t( data.gm )
-
-data.gm[ , "country" ] <- rownames( data.gm )
-
-data.gm <-
-  data.frame(
-    data.gm,
-    stringsAsFactors = FALSE
-  )
-
-data.gm[ , -1 ] <-
-  apply(
-    X = data.gm[ , -1 ],
-    MAR = 2,
-    FUN = as.numeric
-  )
-
-data.gm$"continent" <-
-  factor(
-    x = data.gm$"continent",
-    levels = 1:5,
-    labels = c( "Africa", "Americas", "Asia", "Europe", "Oceania" )
-  )
+data.gm <- 
+  gapminder::gapminder %>% 
+    dplyr::group_by( country ) %>% 
+    dplyr::top_n( n = 1, year ) # suggested by helgebergo
 ```
 
 ## Coronavirus
@@ -80,6 +45,34 @@ data.covid <-
 
 data.covid$"Country.Region"[ data.covid$"Country.Region" == "US" ] <-
   "United States"
+```
+
+## Harmonize
+
+``` r
+data.gm$"country" <- as.character( data.gm$"country" )
+
+data.gm[ data.gm$"country" == "Myanmar", "country" ] <- "Burma"
+data.gm[ data.gm$"country" == "Czech Republic", "country" ] <- "Czechia"
+data.gm[ data.gm$"country" == "Korea, Rep.", "country" ] <- "Korea, South"
+data.gm[ data.gm$"country" == "Slovak Republic", "country" ] <- "Slovakia"
+data.gm[ data.gm$"country" == "Swaziland", "country" ] <- "Eswatini"
+data.gm[ data.gm$"country" == "Yemen, Rep.", "country" ] <- "Yemen"
+
+data.covid[ 
+  data.covid$"Country.Region" == "Congo (Kinshasa)",
+  "Country.Region"
+  ] <- 
+  "Congo, Dem. Rep."
+
+data.covid[ 
+  data.covid$"Country.Region" == "Congo (Brazzaville)", 
+  "Country.Region"
+  ] <- 
+  "Congo, Rep."
+
+data.covid[ data.covid$"Country.Region" == "Taiwan*", "Country.Region" ] <- 
+  "Taiwan"
 ```
 
 ## Integrate
@@ -141,18 +134,18 @@ summary(
     ## 
     ## Residuals:
     ##    Min     1Q Median     3Q    Max 
-    ## -10400  -1743  -1657  -1541  71143 
+    ## -10381  -1639  -1536  -1460  71237 
     ## 
     ## Coefficients:
     ##              Estimate Std. Error t value Pr(>|t|)  
-    ## (Intercept) 1.628e+03  7.567e+02   2.152   0.0333 *
-    ## pop         9.600e-06  4.686e-06   2.049   0.0426 *
+    ## (Intercept) 1.506e+03  7.079e+02   2.127   0.0352 *
+    ## pop         9.694e-06  4.529e-06   2.141   0.0341 *
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ## 
-    ## Residual standard error: 8194 on 126 degrees of freedom
-    ## Multiple R-squared:  0.03223,    Adjusted R-squared:  0.02455 
-    ## F-statistic: 4.197 on 1 and 126 DF,  p-value: 0.04258
+    ## Residual standard error: 7929 on 135 degrees of freedom
+    ## Multiple R-squared:  0.03283,    Adjusted R-squared:  0.02566 
+    ## F-statistic: 4.582 on 1 and 135 DF,  p-value: 0.0341
 
 ### By Continent
 
@@ -221,19 +214,19 @@ summary(
     ## lm(formula = Deaths_per_100k ~ lifeExp, data = data)
     ## 
     ## Residuals:
-    ##     Min      1Q  Median      3Q     Max 
-    ## -10.475  -6.253  -2.868   1.839  71.301 
+    ##    Min     1Q Median     3Q    Max 
+    ## -9.843 -5.876 -2.705  1.750 71.846 
     ## 
     ## Coefficients:
     ##              Estimate Std. Error t value Pr(>|t|)    
-    ## (Intercept) -21.84710    6.05001  -3.611 0.000439 ***
-    ## lifeExp       0.39678    0.08876   4.470 1.72e-05 ***
+    ## (Intercept) -20.18839    5.60556  -3.601 0.000443 ***
+    ## lifeExp       0.36904    0.08247   4.475 1.61e-05 ***
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ## 
-    ## Residual standard error: 11.82 on 126 degrees of freedom
-    ## Multiple R-squared:  0.1369, Adjusted R-squared:   0.13 
-    ## F-statistic: 19.98 on 1 and 126 DF,  p-value: 1.721e-05
+    ## Residual standard error: 11.51 on 135 degrees of freedom
+    ## Multiple R-squared:  0.1292, Adjusted R-squared:  0.1227 
+    ## F-statistic: 20.03 on 1 and 135 DF,  p-value: 1.609e-05
 
 ### By Continent
 
@@ -310,18 +303,18 @@ summary(
     ## 
     ## Residuals:
     ##      Min       1Q   Median       3Q      Max 
-    ## -1.53462 -0.44811  0.02877  0.47057  1.29105 
+    ## -2.08411 -0.42733  0.02937  0.48061  1.33608 
     ## 
     ## Coefficients:
     ##               Estimate Std. Error t value Pr(>|t|)    
-    ## (Intercept)    -4.4256     0.4073  -10.87   <2e-16 ***
-    ## gdpPercap_log   1.1199     0.1061   10.56   <2e-16 ***
+    ## (Intercept)    -4.3229     0.3992  -10.83   <2e-16 ***
+    ## gdpPercap_log   1.0812     0.1041   10.39   <2e-16 ***
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ## 
-    ## Residual standard error: 0.6528 on 115 degrees of freedom
-    ## Multiple R-squared:  0.4922, Adjusted R-squared:  0.4878 
-    ## F-statistic: 111.5 on 1 and 115 DF,  p-value: < 2.2e-16
+    ## Residual standard error: 0.6742 on 124 degrees of freedom
+    ## Multiple R-squared:  0.4653, Adjusted R-squared:  0.461 
+    ## F-statistic: 107.9 on 1 and 124 DF,  p-value: < 2.2e-16
 
 ``` r
 summary(
@@ -337,20 +330,20 @@ summary(
     ## lm(formula = Deaths_per_100k_log ~ gdpPercap_log + lifeExp, data = data.model)
     ## 
     ## Residuals:
-    ##     Min      1Q  Median      3Q     Max 
-    ## -1.5508 -0.4156  0.0075  0.5034  1.3289 
+    ##      Min       1Q   Median       3Q      Max 
+    ## -2.08045 -0.41306  0.01341  0.49102  1.34078 
     ## 
     ## Coefficients:
     ##                Estimate Std. Error t value Pr(>|t|)    
-    ## (Intercept)   -4.496847   0.409399 -10.984  < 2e-16 ***
-    ## gdpPercap_log  0.921127   0.182358   5.051 1.68e-06 ***
-    ## lifeExp        0.012119   0.009062   1.337    0.184    
+    ## (Intercept)   -4.389353   0.401448 -10.934  < 2e-16 ***
+    ## gdpPercap_log  0.897337   0.175953   5.100 1.25e-06 ***
+    ## lifeExp        0.011256   0.008698   1.294    0.198    
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ## 
-    ## Residual standard error: 0.6506 on 114 degrees of freedom
-    ## Multiple R-squared:  0.5001, Adjusted R-squared:  0.4913 
-    ## F-statistic: 57.01 on 2 and 114 DF,  p-value: < 2.2e-16
+    ## Residual standard error: 0.6724 on 123 degrees of freedom
+    ## Multiple R-squared:  0.4725, Adjusted R-squared:  0.4639 
+    ## F-statistic: 55.08 on 2 and 123 DF,  p-value: < 2.2e-16
 
 ``` r
 ggplot2::ggplot(

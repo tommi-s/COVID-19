@@ -40,45 +40,10 @@ library( magrittr )
 
 # View( gapminder::gapminder )
 
-data.gm <-
-  by(
-    data = gapminder::gapminder,
-    INDICES = gapminder::gapminder$"country",
-    FUN =
-      function( x ) {
-        unlist( x[ which.max( x$"year" ), ] )
-      }
-  )
-
-data.gm <-
-  simplify2array(
-    x = data.gm,
-    higher = FALSE
-  )
-
-data.gm <- t( data.gm )
-
-data.gm[ , "country" ] <- rownames( data.gm )
-
-data.gm <-
-  data.frame(
-    data.gm,
-    stringsAsFactors = FALSE
-  )
-
-data.gm[ , -1 ] <-
-  apply(
-    X = data.gm[ , -1 ],
-    MAR = 2,
-    FUN = as.numeric
-  )
-
-data.gm$"continent" <-
-  factor(
-    x = data.gm$"continent",
-    levels = 1:5,
-    labels = c( "Africa", "Americas", "Asia", "Europe", "Oceania" )
-  )
+data.gm <- 
+  gapminder::gapminder %>% 
+    dplyr::group_by( country ) %>% 
+    dplyr::top_n( n = 1, year ) # suggested by helgebergo
 
 ```
 
@@ -98,6 +63,36 @@ data.covid <-
 
 data.covid$"Country.Region"[ data.covid$"Country.Region" == "US" ] <-
   "United States"
+
+```
+
+## Harmonize
+
+```{r Harmonize}
+
+data.gm$"country" <- as.character( data.gm$"country" )
+
+data.gm[ data.gm$"country" == "Myanmar", "country" ] <- "Burma"
+data.gm[ data.gm$"country" == "Czech Republic", "country" ] <- "Czechia"
+data.gm[ data.gm$"country" == "Korea, Rep.", "country" ] <- "Korea, South"
+data.gm[ data.gm$"country" == "Slovak Republic", "country" ] <- "Slovakia"
+data.gm[ data.gm$"country" == "Swaziland", "country" ] <- "Eswatini"
+data.gm[ data.gm$"country" == "Yemen, Rep.", "country" ] <- "Yemen"
+
+data.covid[ 
+  data.covid$"Country.Region" == "Congo (Kinshasa)",
+  "Country.Region"
+  ] <- 
+  "Congo, Dem. Rep."
+
+data.covid[ 
+  data.covid$"Country.Region" == "Congo (Brazzaville)", 
+  "Country.Region"
+  ] <- 
+  "Congo, Rep."
+
+data.covid[ data.covid$"Country.Region" == "Taiwan*", "Country.Region" ] <- 
+  "Taiwan"
 
 ```
 
