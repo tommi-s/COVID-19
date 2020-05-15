@@ -1,0 +1,507 @@
+---
+title: "COVID-19 Cases in the US Counties"
+author: Tommi Suvitaival, tommi.raimo.leo.suvitaival@regionh.dk, Steno Diabetes Center
+  Copenhagen
+date: "`r Sys.Date()`"
+output: github_document
+---
+  
+```{r setup, include=FALSE}
+
+knitr::opts_chunk$set(
+  echo = TRUE,
+  dpi = 600,
+  fig.height = 9,
+  fig.width = 9,
+  warning = FALSE
+)
+
+```
+
+# Introduction
+
+* County-level COVID-19 data from New York Times
+* County-level population data from US Census
+
+# Load Data
+
+## Census
+
+```{r Load-Census}
+
+# Source: https://www2.census.gov/library/publications/2011/compendia/usa-counties/excel/POP01.xls",
+
+N.sheets <- 10
+
+data.census.loaded <-
+  lapply(
+    X = 1:N.sheets,
+    FUN =
+      function( x ) {
+        readxl::read_excel(
+          path = "H:/projects/covid19/data/US_Census/POP01.xls",
+          sheet = x
+        )
+      }
+  )
+
+# Source: https://www2.census.gov/library/publications/2011/compendia/usa-counties/excel/Mastdata.xls
+
+mastdata.census <-
+  readxl::read_excel(
+    path = "H:/projects/covid19/data/US_Census/Mastdata.xls",
+  )
+
+
+data.census <- data.census.loaded[[ 1 ]]
+
+for ( i in 2:length( data.census.loaded ) ) {
+  
+  data.census <-
+    merge(
+      x = data.census,
+      y = data.census.loaded[[ i ]][ , -1 ],
+      by = "STCOU",
+      all = TRUE
+    )
+  
+}
+
+tmp <-
+  match(
+    table = mastdata.census$"Item_Id",
+    x = colnames( data.census )
+  )
+
+data.census.orig <- data.census
+
+colnames( data.census )[ !is.na( tmp ) ] <-
+  unlist( mastdata.census[ tmp[ !is.na( tmp ) ], "Item_Description" ] )
+
+```
+
+## COVID-19
+
+```{r Load-COVID}
+
+data.covid.loaded <-
+  readr::read_csv(
+    file = "https://raw.githubusercontent.com/nytimes/covid-19-data/master/us-counties.csv"
+  )
+
+# View( data.covid.loaded )
+
+```
+
+```{r}
+
+data.covid <-
+  by(
+    data = data.covid.loaded,
+    INDICES = data.covid.loaded$"fips",
+    FUN =
+      function( x ) {
+        as.data.frame( x[ which.max( x$"date" ), ] )
+      }
+  )
+
+data.covid <- dplyr::bind_rows( data.covid )
+
+data.covid <-
+  merge(
+    x = data.covid,
+    y = USAboundaries::state_codes,
+    by.x = "state",
+    by.y = "state_name",
+    all.x = TRUE,
+    all.y = FALSE
+  )
+
+data.covid$"County_State" <-
+  paste(
+    data.covid$"county",
+    data.covid$"state_abbr",
+    sep = ", "
+  )
+
+```
+
+## Merge
+
+```{r Merge}
+
+data <-
+  merge(
+    x = data.covid,
+    y = data.census,
+    by.x = "County_State",
+    by.y = "Area_name",
+    all = FALSE
+  )
+
+data$"Deaths_per_Capita" <-
+  data$"deaths" / data$"Resident population (April 1 - complete count) 2010"
+
+data$"Deaths_per_100k" <- data$"Deaths_per_Capita" * 100000
+
+data$"Cases_per_Capita" <-
+  data$"cases" / data$"Resident population (April 1 - complete count) 2010"
+
+data$"Cases_per_100k" <- data$"Cases_per_Capita" * 100000
+
+```
+
+# Figures
+
+## Cases per Capita v. Population Density
+
+### All States
+
+```{r Cases-All, fig.height = 9, fig.width = 9}
+
+data.plot <- data
+colnames( data.plot ) <- make.names( colnames( data.plot ) )
+
+ggplot2::ggplot(
+  data = data.plot,
+  mapping =
+    ggplot2::aes(
+      x = Population.per.square.mile.2010,
+      y = Cases_per_100k,
+    )
+) +
+  ggplot2::geom_point( alpha = 0.25 ) +
+  ggplot2::geom_smooth( method = "lm" ) +
+  ggplot2::scale_x_log10() +
+  ggplot2::scale_y_log10() +
+  ggplot2::xlab( label = "Population density (individuals per square mile)" ) + 
+  ggplot2::ylab( label = "Reported COVID-19 cases (per 100,000 individuals)" ) +
+  ggplot2::theme(
+    axis.text.x =
+      ggplot2::element_text(
+        angle = 45,
+        vjust = 0.5
+      )
+  ) +
+  ggplot2::facet_wrap( facets = ggplot2::vars( state ) )
+
+```
+
+```{r Cases-All-B, fig.height = 10, fig.width = 10}
+
+# data.plot <- data
+# colnames( data.plot ) <- make.names( colnames( data.plot ) )
+
+ggplot2::ggplot(
+  data = data.plot,
+  mapping =
+    ggplot2::aes(
+      x = Population.per.square.mile.2010,
+      y = Cases_per_100k,
+    )
+) +
+  ggplot2::geom_point( alpha = 0.25 ) +
+  ggplot2::geom_smooth( method = "lm" ) +
+  ggplot2::scale_x_log10() +
+  ggplot2::scale_y_log10() +
+  ggplot2::xlab( label = "Population density (individuals per square mile)" ) + 
+  ggplot2::ylab( label = "Reported COVID-19 cases (per 100,000 individuals)" ) +
+  ggplot2::theme(
+    axis.text.x =
+      ggplot2::element_text(
+        angle = 45,
+        vjust = 0.5
+      )
+  ) +
+  ggplot2::facet_wrap(
+    facets = ggplot2::vars( state ),
+    scales = "free"
+  )
+
+```
+
+### Most Populous States
+
+```{r Cases-Most-Populous-A, fig.height = 8, fig.width = 8}
+
+pop.by.state <-
+  tapply(
+    X = data.plot$"Resident.population..April.1...complete.count..2010",
+    INDEX = data.plot$"state",
+    FUN = sum
+  )
+
+top.states <- names( sort( x = pop.by.state, decreasing = TRUE ) )[ 1:9 ]
+
+ggplot2::ggplot(
+  data = data.plot[ data.plot$"state" %in% top.states, ],
+  mapping =
+    ggplot2::aes(
+      x = Population.per.square.mile.2010,
+      y = Cases_per_100k
+    )
+) +
+  ggplot2::geom_point() +
+  ggplot2::geom_smooth( method = "lm" ) +
+  ggplot2::scale_x_log10() +
+  ggplot2::scale_y_log10() +
+  ggplot2::xlab( label = "Population density (individuals per square mile)" ) + 
+  ggplot2::ylab( label = "Reported COVID-19 cases (per 100,000 individuals)" ) +
+  ggplot2::theme(
+    axis.text.x =
+      ggplot2::element_text(
+        angle = 45,
+        vjust = 0.5
+      )
+  ) +
+  ggplot2::facet_wrap(
+    facets = ggplot2::vars( state ),
+    scales = "free"
+  )
+
+```
+
+```{r Cases-Most-Populous-A-2, fig.height = 7, fig.width = 7}
+
+ggplot2::ggplot(
+  data = data.plot[ data.plot$"state" %in% top.states, ],
+  mapping =
+    ggplot2::aes(
+      x = Population.per.square.mile.2010,
+      y = Cases_per_100k
+    )
+) +
+  ggplot2::geom_point() +
+  ggplot2::geom_smooth( method = "lm" ) +
+  ggplot2::scale_x_log10() +
+  ggplot2::scale_y_log10() +
+  ggplot2::xlab( label = "Population density (individuals per square mile)" ) + 
+  ggplot2::ylab( label = "Reported COVID-19 cases (per 100,000 individuals)" ) +
+  ggplot2::theme( 
+    axis.text.x = 
+      ggplot2::element_text(
+        angle = 45,
+        vjust = 0.5
+      )
+  ) +
+  ggplot2::facet_wrap(
+    facets = ggplot2::vars( state )
+  )
+
+```
+
+```{r Cases-Most-Populous-B, fig.height = 7, fig.width = 7}
+
+pop.by.state <-
+  tapply(
+    X = data.plot$"Resident.population..April.1...complete.count..2010",
+    INDEX = data.plot$"state",
+    FUN = sum
+  )
+
+top.states <- names( sort( x = pop.by.state, decreasing = TRUE ) )[ 1:4 ]
+
+ggplot2::ggplot(
+  data = data.plot[ data.plot$"state" %in% top.states, ],
+  mapping =
+    ggplot2::aes(
+      x = Population.per.square.mile.2010,
+      y = Cases_per_100k
+    )
+) +
+  ggplot2::geom_point() +
+  ggplot2::geom_smooth( method = "lm" ) +
+  ggplot2::scale_x_log10() +
+  ggplot2::scale_y_log10() +
+  ggplot2::xlab( label = "Population density (individuals per square mile)" ) + 
+  ggplot2::ylab( label = "Reported COVID-19 cases (per 100,000 individuals)" ) +
+  ggplot2::theme(
+    axis.text.x =
+      ggplot2::element_text(
+        angle = 45,
+        vjust = 0.5
+      )
+  ) +
+  ggplot2::facet_wrap(
+    facets = ggplot2::vars( state ),
+    scales = "free",
+    ncol = 2
+  )
+
+```
+
+```{r Cases-All-C, fig.height = 12, fig.width = 12}
+
+ggplot2::ggplot(
+  data = data.plot[ data.plot$"state" %in% top.states, ],
+  mapping =
+    ggplot2::aes(
+      x = Population.per.square.mile.2010,
+      y = Cases_per_100k,
+      label = county
+    )
+) +
+  ggplot2::geom_point( alpha = 0.25 ) +
+  ggplot2::geom_smooth( method = "lm" ) +
+  ggplot2::scale_x_log10() +
+  ggplot2::scale_y_log10() +
+  ggplot2::xlab( label = "Population density (individuals per square mile)" ) + 
+  ggplot2::ylab( label = "Reported COVID-19 cases (per 100,000 individuals)" ) +
+  ggplot2::theme(
+    axis.text.x =
+      ggplot2::element_text(
+        angle = 45,
+        vjust = 0.5
+      )
+  ) +
+  ggplot2::facet_wrap(
+    facets = ggplot2::vars( state ),
+    scales = "free",
+    ncol = 2
+  ) +
+  ggrepel::geom_text_repel()
+
+```
+
+
+### By State
+
+
+```{r Cases-By-State, fig.height = 9, fig.width = 9}
+
+states <- sort( unique( data.plot$"state" ) )
+
+data.plot$"Cases_per_Capita_log" <- log10( data.plot$"Cases_per_Capita" )
+
+data.plot$"Population.per.square.mile.2010.log" <-
+  log10( data.plot$"Population.per.square.mile.2010" )
+
+for ( i in 1:length( states ) ) {
+
+  state.i <- states[ i ]
+
+  data.plot.i <- data.plot[ data.plot$state == state.i, ]
+
+  plot.i <-
+    ggplot2::ggplot(
+      data = data.plot.i,
+      mapping =
+        ggplot2::aes(
+          x = Population.per.square.mile.2010,
+          y = Cases_per_100k,
+          label = county
+        )
+    ) +
+    ggplot2::geom_point() +
+    ggplot2::geom_smooth( method = "lm" ) +
+    ggplot2::scale_x_log10() +
+    ggplot2::scale_y_log10() +
+    ggplot2::xlab( label = "Population density (individuals per square mile)" ) +
+    ggplot2::ylab( label = "Reported COVID-19 cases (per 100,000 individuals)" ) +
+    ggplot2::theme(
+      axis.text.x =
+        ggplot2::element_text(
+          angle = 45,
+          vjust = 0.5
+        )
+    ) +
+    ggrepel::geom_text_repel() +
+    ggplot2::ggtitle( label = state.i )
+
+  print( plot.i )
+
+  print(
+    summary(
+      lm(
+        formula = Cases_per_Capita_log ~ Population.per.square.mile.2010.log,
+        data = data.plot.i
+      )
+    )
+  )
+
+}
+
+```
+
+## Deaths per Capita v. Population Density
+
+### All States
+
+```{r Deaths-All, fig.height = 9, fig.width = 9}
+
+data.plot <- data
+colnames( data.plot ) <- make.names( colnames( data.plot ) )
+
+ggplot2::ggplot(
+  data = data.plot,
+  mapping =
+    ggplot2::aes(
+      x = Population.per.square.mile.2010,
+      y = Deaths_per_100k,
+    )
+) +
+  ggplot2::geom_point( alpha = 0.25 ) +
+  ggplot2::geom_smooth( method = "lm" ) +
+  ggplot2::scale_x_log10() +
+  ggplot2::scale_y_log10() +
+  ggplot2::xlab( label = "Population density (individuals per square mile)" ) + 
+  ggplot2::ylab( label = "Reported COVID-19 deaths (per 100,000 individuals)" ) +
+  ggplot2::theme(
+    axis.text.x =
+      ggplot2::element_text(
+        angle = 45,
+        vjust = 0.5
+      )
+  ) +
+  ggplot2::facet_wrap( facets = ggplot2::vars( state ) )
+
+```
+
+### Most Populous States
+
+```{r Deaths-Most-Populous-A, fig.height = 8, fig.width = 8}
+
+pop.by.state <-
+  tapply(
+    X = data.plot$"Resident.population..April.1...complete.count..2010",
+    INDEX = data.plot$"state",
+    FUN = sum
+  )
+
+top.states <- names( sort( x = pop.by.state, decreasing = TRUE ) )[ 1:9 ]
+
+ggplot2::ggplot(
+  data = data.plot[ data.plot$"state" %in% top.states, ],
+  mapping =
+    ggplot2::aes(
+      x = Population.per.square.mile.2010,
+      y = Deaths_per_100k
+    )
+) +
+  ggplot2::geom_point() +
+  ggplot2::geom_smooth( method = "lm" ) +
+  ggplot2::scale_x_log10() +
+  ggplot2::scale_y_log10() +
+  ggplot2::xlab( label = "Population density (individuals per square mile)" ) + 
+  ggplot2::ylab( label = "Reported COVID-19 deaths (per 100,000 individuals)" ) +
+  ggplot2::theme(
+    axis.text.x =
+      ggplot2::element_text(
+        angle = 45,
+        vjust = 0.5
+      )
+  ) +
+  ggplot2::facet_wrap(
+    facets = ggplot2::vars( state ),
+    scales = "free"
+  )
+
+```
+
+# Appendix
+
+```{r SessionInfo}
+
+utils::sessionInfo()
+
+```
