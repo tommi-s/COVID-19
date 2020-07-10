@@ -2,7 +2,11 @@ Mortality in Sweden
 ================
 Tommi Suvitaival, <tommi.raimo.leo.suvitaival@regionh.dk>, Steno
 Diabetes Center Copenhagen
-2020-05-13
+2020-07-10
+
+# Updates
+
+  - Calculations updated to new data from 3.7.2020.
 
 # Load Data
 
@@ -19,7 +23,8 @@ Diabetes Center Copenhagen
 ``` r
 data.loaded <-
   readxl::read_excel(
-    path = "H:/projects/covid19/data/SCB/2020-05-08---preliminar-statistik-over-doda-inkl-eng.xlsx",
+    path = "H:/projects/covid19/data/SCB/2020-07-03-preliminar_statistik_over_doda_inkl_eng_ver2.xlsx",
+    # path = "H:/projects/covid19/data/SCB/2020-05-08---preliminar-statistik-over-doda-inkl-eng.xlsx",
     sheet = "Tabell 7",
     skip = 8
   )
@@ -407,6 +412,10 @@ ggplot2::ggplot(
 ) +
   ggplot2::geom_point() +
   ggplot2::geom_smooth() +
+  ggplot2::geom_hline(
+    yintercept = 0,
+    linetype = "dashed"
+  ) +
   ggplot2::facet_wrap( facets = ggplot2::vars( Age ) ) +
   ggplot2::scale_color_brewer( palette = "Set1" ) +
   ggplot2::ylab(
@@ -804,30 +813,28 @@ difference.peak.by.group$"Increase_in_Deaths_per_Week" <-
 ```
 
 ``` r
-ggplot2::ggplot(
-  data = difference.peak.by.group,
-  mapping =
-    ggplot2::aes(
-      x = Group,
-      ymax = Increase_in_Deaths_Pcnt,
-      ymin = 0,
-      color = Grouping
-    ),
-) +
-  ggplot2::geom_linerange( size = 2 ) +
-  ggplot2::geom_hline( yintercept = 0, linetype = "dotted" ) +
-  ggplot2::coord_flip() +
-  ggplot2::facet_grid(
-    rows = ggplot2::vars( Grouping ),
-    scales = "free_y"
-  ) +
-  ggplot2::ylab(
-    label = "Excess mortality (%)\nat peak week (15) in 2020\ncompared to the same week in 2015-2019"
-  ) +
-  ggplot2::scale_color_brewer( palette = "Set1" )
+# ggplot2::ggplot(
+#   data = difference.peak.by.group,
+#   mapping =
+#     ggplot2::aes(
+#       x = Group,
+#       ymax = Increase_in_Deaths_Pcnt,
+#       ymin = 0,
+#       color = Grouping
+#     ),
+# ) +
+#   ggplot2::geom_linerange( size = 2 ) +
+#   ggplot2::geom_hline( yintercept = 0, linetype = "dotted" ) +
+#   ggplot2::coord_flip() +
+#   ggplot2::facet_grid(
+#     rows = ggplot2::vars( Grouping ),
+#     scales = "free_y"
+#   ) +
+#   ggplot2::ylab(
+#     label = "Excess mortality (%)\nat peak week (15) in 2020\ncompared to the same week in 2015-2019"
+#   ) +
+#   ggplot2::scale_color_brewer( palette = "Set1" )
 ```
-
-![](README_files/figure-gfm/Plot-Diff-Peak-by-Group-1.png)<!-- -->
 
 ``` r
 data.table <- difference.peak.by.group[ , -c( 1, 3 ) ]
