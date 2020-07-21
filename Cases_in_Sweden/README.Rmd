@@ -1,0 +1,177 @@
+---
+title: "Registered COVID-19 Cases by Region in Sweden"
+author: Tommi Suvitaival, tommi.raimo.leo.suvitaival@regionh.dk, Steno Diabetes Center
+  Copenhagen
+date: "`r Sys.Date()`"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+
+knitr::opts_chunk$set(
+  echo = TRUE,
+  dpi = 600,
+  fig.height = 7,
+  fig.width = 7
+)
+
+```
+
+# Load Data
+
+```{r Load-Data}
+
+# Load data of registered COVID-19 cases.
+# Data from Folkhälsomyndigheten at
+# https://www.folkhalsomyndigheten.se/smittskydd-beredskap/utbrott/aktuella-utbrott/covid-19/statistik-och-analyser/bekraftade-fall-i-sverige/ 
+# under the link "Data som statistiken ovan bygger på kan laddas ner här (Excel)"
+# ( https://www.arcgis.com/sharing/rest/content/items/b5e7488e117749c19881cce45db13f7e/data )
+
+data.cases.loaded <-
+  readxl::read_excel(
+    path = "H:/projects/covid19/data/Folkhalsomyndigheten/Folkhalsomyndigheten_Covid19.xlsx",
+    sheet = "Veckodata Region"
+  )
+
+```
+
+# Prepare Data
+
+## Compute Criterion of Severity
+
+```{r}
+
+data <- data.cases.loaded
+
+data$Is_under_20_new_cases_per_100k_inhabitants_per_week <-
+  data$"Antal_fall_100000inv_vecka" < 20
+
+```
+
+## Translate
+
+```{r Translate}
+
+colnames( data )[ colnames( data ) == "Antal_fall_vecka" ] <-
+  "New_cases"
+
+colnames( data )[ colnames( data ) == "Kum_antal_fall" ] <-
+  "Cumulative_cases"
+
+colnames( data )[ colnames( data ) == "Antal_intensivvårdade_vecka" ] <-
+  "Cases_in_ICU"
+
+colnames( data )[ colnames( data ) == "Kum_antal_intensivvårdade" ] <-
+  "Cumulative_ICU_treated"
+
+colnames( data )[ colnames( data ) == "Antal_avlidna_vecka" ] <-
+  "New_deaths"
+
+colnames( data )[ colnames( data ) == "Kum_antal_avlidna" ] <-
+  "Cumulative_deaths"
+
+colnames( data )[ colnames( data ) == "Antal_fall_100000inv_vecka" ] <-
+  "New_cases_per_100k_inhabitants"
+
+colnames( data )[ colnames( data ) == "Kum_fall_100000inv" ] <-
+  "Cumulative_cases_per_100k_inhabitants"
+
+colnames( data )[ colnames( data ) == "veckonummer" ] <-
+  "Week"
+
+```
+
+
+# Figures
+
+## Cases By 100,000 Inhabitants
+
+### All Regions
+
+```{r Plot-All}
+
+ggplot2::ggplot(
+  data = data,
+  mapping =
+    ggplot2::aes(
+      x = Week,
+      y = New_cases_per_100k_inhabitants,
+      color = Region,
+      shape = Region
+    )
+) +
+  ggplot2::geom_point() +
+  ggplot2::geom_smooth( se = FALSE ) +
+  ggplot2::geom_hline(
+    yintercept = 20,
+    linetype = "dashed"
+  ) +
+  ggplot2::scale_shape_manual( values = LETTERS )
+
+```
+
+## By Region
+
+### Data Points Only
+
+```{r Plot-Regions}
+
+ggplot2::ggplot(
+  data = data,
+  mapping =
+    ggplot2::aes(
+      x = Week,
+      y = New_cases_per_100k_inhabitants,
+      color = Is_under_20_new_cases_per_100k_inhabitants_per_week,
+      group = Region
+    )
+) +
+  ggplot2::geom_point() +
+  ggplot2::geom_hline(
+    yintercept = 20,
+    linetype = "dashed"
+  ) +
+  ggplot2::scale_color_brewer( palette = "Set1" ) +
+  ggplot2::theme( legend.position = "top" ) +
+  ggplot2::facet_wrap(facets = ggplot2::vars( Region ) )
+
+```
+
+### With Smoothing
+
+```{r Plot-Regions-Smooth}
+
+ggplot2::ggplot(
+  data = data,
+  mapping =
+    ggplot2::aes(
+      x = Week,
+      y = New_cases_per_100k_inhabitants,
+      color = Is_under_20_new_cases_per_100k_inhabitants_per_week,
+      group = Region
+    )
+) +
+  ggplot2::geom_point() +
+  ggplot2::geom_smooth(
+    color = "gray",
+    alpha = 0.25
+  ) +
+  ggplot2::geom_hline( 
+    yintercept = 20,
+    linetype = "dashed"
+  ) +
+  ggplot2::scale_color_brewer( palette = "Set1" ) +
+  ggplot2::theme_bw() +
+  ggplot2::theme( legend.position = "top" ) +
+  ggplot2::facet_wrap(facets = ggplot2::vars( Region ) )
+
+```
+
+# Appendix
+
+```{r SessionInfo}
+
+utils::sessionInfo()
+
+```
+
