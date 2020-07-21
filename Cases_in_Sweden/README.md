@@ -151,6 +151,125 @@ ggplot2::ggplot(
 
 ![](README_files/figure-gfm/Plot-Regions-Smooth-1.png)<!-- -->
 
+## By Region in Individual Figures
+
+``` r
+regions <- sort( unique ( data$"Region" ) )
+
+for ( i in 1:length( unique( regions ) ) ) {
+
+  plot.i <-
+    ggplot2::ggplot(
+      data = data[ data$"Region" == regions[ i ], ],
+      mapping =
+        ggplot2::aes(
+          x = Week,
+          y = New_cases_per_100k_inhabitants,
+          color = Is_under_20_new_cases_per_100k_inhabitants_per_week,
+          group = Region
+        )
+    ) +
+    ggplot2::geom_point() +
+    ggplot2::geom_smooth(
+      color = "black"
+    ) +
+    ggplot2::geom_hline( 
+      yintercept = 20,
+      linetype = "dashed"
+    ) +
+    ggplot2::scale_color_brewer( palette = "Set1" ) +
+    ggplot2::theme( legend.position = "top" ) +
+    ggplot2::ggtitle( label = regions[ i ] )
+
+  print( plot.i )
+  
+}
+```
+
+    ## `geom_smooth()` using method = 'loess' and formula 'y ~ x'
+
+![](README_files/figure-gfm/Plot-Individual-1.png)<!-- -->
+
+    ## `geom_smooth()` using method = 'loess' and formula 'y ~ x'
+
+![](README_files/figure-gfm/Plot-Individual-2.png)<!-- -->
+
+    ## `geom_smooth()` using method = 'loess' and formula 'y ~ x'
+
+![](README_files/figure-gfm/Plot-Individual-3.png)<!-- -->
+
+    ## `geom_smooth()` using method = 'loess' and formula 'y ~ x'
+
+![](README_files/figure-gfm/Plot-Individual-4.png)<!-- -->
+
+    ## `geom_smooth()` using method = 'loess' and formula 'y ~ x'
+
+![](README_files/figure-gfm/Plot-Individual-5.png)<!-- -->
+
+    ## `geom_smooth()` using method = 'loess' and formula 'y ~ x'
+
+![](README_files/figure-gfm/Plot-Individual-6.png)<!-- -->
+
+    ## `geom_smooth()` using method = 'loess' and formula 'y ~ x'
+
+![](README_files/figure-gfm/Plot-Individual-7.png)<!-- -->
+
+    ## `geom_smooth()` using method = 'loess' and formula 'y ~ x'
+
+![](README_files/figure-gfm/Plot-Individual-8.png)<!-- -->
+
+    ## `geom_smooth()` using method = 'loess' and formula 'y ~ x'
+
+![](README_files/figure-gfm/Plot-Individual-9.png)<!-- -->
+
+    ## `geom_smooth()` using method = 'loess' and formula 'y ~ x'
+
+![](README_files/figure-gfm/Plot-Individual-10.png)<!-- -->
+
+    ## `geom_smooth()` using method = 'loess' and formula 'y ~ x'
+
+![](README_files/figure-gfm/Plot-Individual-11.png)<!-- -->
+
+    ## `geom_smooth()` using method = 'loess' and formula 'y ~ x'
+
+![](README_files/figure-gfm/Plot-Individual-12.png)<!-- -->
+
+    ## `geom_smooth()` using method = 'loess' and formula 'y ~ x'
+
+![](README_files/figure-gfm/Plot-Individual-13.png)<!-- -->
+
+    ## `geom_smooth()` using method = 'loess' and formula 'y ~ x'
+
+![](README_files/figure-gfm/Plot-Individual-14.png)<!-- -->
+
+    ## `geom_smooth()` using method = 'loess' and formula 'y ~ x'
+
+![](README_files/figure-gfm/Plot-Individual-15.png)<!-- -->
+
+    ## `geom_smooth()` using method = 'loess' and formula 'y ~ x'
+
+![](README_files/figure-gfm/Plot-Individual-16.png)<!-- -->
+
+    ## `geom_smooth()` using method = 'loess' and formula 'y ~ x'
+
+![](README_files/figure-gfm/Plot-Individual-17.png)<!-- -->
+
+    ## `geom_smooth()` using method = 'loess' and formula 'y ~ x'
+
+![](README_files/figure-gfm/Plot-Individual-18.png)<!-- -->
+
+    ## `geom_smooth()` using method = 'loess' and formula 'y ~ x'
+
+![](README_files/figure-gfm/Plot-Individual-19.png)<!-- -->
+
+    ## `geom_smooth()` using method = 'loess' and formula 'y ~ x'
+
+![](README_files/figure-gfm/Plot-Individual-20.png)<!-- -->
+
+    ## `geom_smooth()` using method = 'loess' and formula 'y ~ x'
+
+![](README_files/figure-gfm/Plot-Individual-21.png)<!-- -->
+
 # Appendix
 
 ``` r

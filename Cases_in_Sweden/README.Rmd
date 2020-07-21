@@ -167,6 +167,43 @@ ggplot2::ggplot(
 
 ```
 
+## By Region in Individual Figures
+
+```{r Plot-Individual, fig.width = 6, fig.height = 6}
+
+regions <- sort( unique ( data$"Region" ) )
+
+for ( i in 1:length( unique( regions ) ) ) {
+
+  plot.i <-
+    ggplot2::ggplot(
+      data = data[ data$"Region" == regions[ i ], ],
+      mapping =
+        ggplot2::aes(
+          x = Week,
+          y = New_cases_per_100k_inhabitants,
+          color = Is_under_20_new_cases_per_100k_inhabitants_per_week,
+          group = Region
+        )
+    ) +
+    ggplot2::geom_point() +
+    ggplot2::geom_smooth(
+      color = "black"
+    ) +
+    ggplot2::geom_hline( 
+      yintercept = 20,
+      linetype = "dashed"
+    ) +
+    ggplot2::scale_color_brewer( palette = "Set1" ) +
+    ggplot2::theme( legend.position = "top" ) +
+    ggplot2::ggtitle( label = regions[ i ] )
+
+  print( plot.i )
+  
+}
+
+```
+
 # Appendix
 
 ```{r SessionInfo}
