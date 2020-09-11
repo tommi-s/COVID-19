@@ -1,0 +1,174 @@
+---
+title: "Daily New Cases of COVID-19 in Danish Municipalities"
+author: Tommi Suvitaival, tommi.raimo.leo.suvitaival@regionh.dk, Steno Diabetes Center
+  Copenhagen
+date: "`r Sys.Date()`"
+output: github_document
+---
+
+# Introduction
+
+* Municipality-level data of daily new cases of COVID-19 in Denmark
+* Data from Statens Serum Institut
+  + at https://www.ssi.dk/sygdomme-beredskab-og-forskning/sygdomsovervaagning/c/covid19-overvaagning
+  + behind  "fil med overvågningsdata"
+
+# Load Data
+
+```{r}
+
+# Data from Statens Serum Institut
+# at https://www.ssi.dk/sygdomme-beredskab-og-forskning/sygdomsovervaagning/c/covid19-overvaagning
+# behind "fil med overvågningsdata"
+# (Direct link:
+#  https://files.ssi.dk/Data-Epidemiologiske-Rapport-10092020-77gf ;
+#  accessed 11.9.2020.
+# )
+
+data.loaded <-
+  readr::read_delim(
+    file = "H:/projects/covid19/data/SSI/Municipality_cases_time_series.csv", 
+    delim = ";",
+    escape_double = FALSE,
+    trim_ws = TRUE,
+    col_names = TRUE
+  )
+
+```
+
+# Prepare Data
+
+```{r}
+
+data <- data.loaded
+
+data$"date_sample" <- lubridate::as_date( x = data$"date_sample" )
+
+```
+
+# Proportion of Municipalities with Daily New COVID-19 Cases
+
+## Compute Values
+
+```{r}
+
+data.plot <- data
+
+data.plot$"Pcnt_municipalities_with_new_cases" <- 
+  rowMeans( x = data[ , -1 ] > 0 ) * 100
+
+data.plot$"Total_new_cases" <- rowSums( x = data[ , -1 ] )
+
+```
+
+```{r}
+
+breaks.date <-
+  ggplot2::scale_x_date(
+    breaks = as.Date( paste0( "2020-0", 3:9, "-01" ) ),
+    date_labels = "%b"
+  )
+
+```
+
+## Plot
+
+```{r Cases-v-Date, dpi = 600, dev = c( "png" )}
+
+ggplot2::ggplot(
+  data = data.plot,
+  mapping =
+    ggplot2::aes(
+      x = date_sample,
+      y = Pcnt_municipalities_with_new_cases
+    )
+) +
+  ggplot2::geom_point( mapping = ggplot2::aes( size = Total_new_cases ) ) +
+  ggplot2::geom_smooth() +
+  breaks.date +
+  ggplot2::xlab( label = "Date" ) +
+  ggplot2::ylab( label = "Proportion (%) of Danish Municipalities\nwith Daily New Cases of COVID-19" ) +
+  ggplot2::guides( size = ggplot2::guide_legend( title = "Total Number of\nDaily New\nCOVID-19 Cases\nin Denmark" ) )
+
+```
+
+# Cases by Municipality
+
+## Convert Data into Long Format
+
+```{r}
+
+data.plot <- 
+  tidyr::pivot_longer( 
+    data = data,
+    cols = -1,
+    names_to = "Municipality",
+    values_to = "New_cases"
+  )
+
+```
+
+## Plot
+
+### All Municipalities
+
+```{r Cases-by-Municipality-All, fig.height = 10, fig.width = 10, dpi = 600, dev=c( "png" )}
+
+ggplot2::ggplot(
+  data = data.plot,
+  mapping =
+    ggplot2::aes(
+      x = date_sample,
+      y = New_cases,
+      color = Municipality
+    )
+) +
+  ggplot2::geom_point( alpha = 0.25 ) +
+  ggplot2::geom_smooth() +
+  breaks.date +
+  ggplot2::xlab( label = "Date" ) +
+  ggplot2::ylab( label = "New Daily COVID-19 Cases" )
+
+```
+
+## Municipalities Individually
+
+```{r Cases-by-Municipality-Individual, fig.width = 6, fig.height = 6, dpi = 600, dev=c( "png" )}
+
+municipalities <- unique( data.plot$"Municipality" )
+
+municipalities <- sort( x = municipalities )
+
+for ( i in 1:length( municipalities ) ) {
+  
+  plot.i <-
+    ggplot2::ggplot(
+      data = data.plot[ data.plot$"Municipality" == municipalities[ i ], ],
+      mapping =
+        ggplot2::aes(
+          x = date_sample,
+          y = New_cases,
+        )
+    ) +
+    ggplot2::geom_point() +
+    ggplot2::geom_smooth() +
+    breaks.date +
+    ggplot2::xlab( label = "Date" ) +
+    ggplot2::ylab( label = "Daily New COVID-19 Cases" ) +
+    ggplot2::ggtitle( label = municipalities[ i ] )
+  
+  print( plot.i )
+  print( municipalities[ i ] )
+  
+}
+
+```
+
+# SessionInfo
+
+```{r}
+
+utils::sessionInfo()
+
+```
+
